@@ -16,12 +16,11 @@ log.info("Starting downstream analysis of rna-seq and atac-seq data")
 /* Module inclusions
 --------------------------------------------------------------------------------------*/
 
-include {normalisation} from 'rna-seq/normalisation/main.nf' 
-include {dea} from 'rna-seq/diff-expression-analysis/main.nf'
-include{uca} from 'rna-seq/unsupervised-clustering-analyses/main.nf'
+include {deseq2} from 'rna-seq/deseq2/main.nf' 
 
+workflow rnaseq-da {
+    main:
+        // Normalise the count data
 
-
-workflow {
-  
+        // 
 }
