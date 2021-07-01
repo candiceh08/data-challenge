@@ -1,18 +1,24 @@
-FROM rticode/deseq2:1.26.0_08a6163
+# Set the base image to Ubuntu 16.04
+FROM rocker/rstudio:4.0.3
+
 LABEL authors="candice.hermant@gmail.com" \
-      description="Docker image containing all requirements for analysis of rna-seq gene-level count data"
+        description="Docker image containing Rstudio and a conda env for the deseq2.r script"
 
-# Install R packages
+#Install conda
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV PATH /opt/conda/bin:$PATH
 
-RUN R -e "install.packages('pheatmap', dependencies=TRUE, repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('mclust', dependencies=TRUE, repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('optparse', dependencies=TRUE, repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('factoextra', dependencies=TRUE, repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('cowplot', dependencies=TRUE, repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('gridExtra', dependencies=TRUE, repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('dplyr', dependencies=TRUE, repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('stringr', dependencies=TRUE, repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('openxlsx', dependencies=TRUE, repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('RColorBrewer', dependencies=TRUE, repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('colorspace', dependencies=TRUE, repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('data.table', dependencies=TRUE, repos='https://cloud.r-project.org/')"
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py38_4.9.2-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /opt/conda && \
+    rm ~/miniconda.sh && \
+    /opt/conda/bin/conda clean -tipsy && \
+    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "conda activate base" >> ~/.bashrc
+
+# Update conda
+RUN conda update -n base -c defaults conda
+
+# Install conda packages
+COPY environment.yml /
+RUN conda env update -f /environment.yml && conda clean -a

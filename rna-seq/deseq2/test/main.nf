@@ -10,7 +10,6 @@ log.info ("Starting tests for deseq2...")
 /* Define params
 --------------------------------------------------------------------------------------*/
 
-params.verbose = true
 params.metadata = "$baseDir/data/rnaseq_design.txt"
 
 /*------------------------------------------------------------------------------------*/
@@ -37,4 +36,7 @@ Channel
 workflow {
     // Run deseq2
     deseq2(ch_test_counts)
+
+    // View output
+    //deseq2.out.dds_results | view
 }

@@ -4,26 +4,23 @@
 #- R script that runs differential gene expression using the DESeq2 bioconductor package
 #-------------------------------------------------------------------------------------------------------------------------
 
-# TO-DO: 
-# create two options: one for metadata path, one for count data path - done
-# add all the R packages to the docker image - done 
+#----------------------------------
+#- Load / install required packages
+#----------------------------------
 
-# supress warnings
-#options(warn=-1)
-
-#suppressPackageStartupMessages(library(optparse))
-#suppressPackageStartupMessages(library(ggplot2))
-#suppressPackageStartupMessages(library(pheatmap))
-#suppressPackageStartupMessages(library(mclust))
-#suppressPackageStartupMessages(library(factoextra))
-#suppressPackageStartupMessages(library(cowplot))
-#suppressPackageStartupMessages(library(gridExtra))
-#suppressPackageStartupMessages(library(dplyr))
-#suppressPackageStartupMessages(library(stringr))
-#suppressPackageStartupMessages(library(openxlsx))
-#suppressPackageStartupMessages(library(RColorBrewer))
-#suppressPackageStartupMessages(library(colorspace))
-#suppressPackageStartupMessages(library(data.table))
+library(optparse)
+library(stringr)
+library(BiocParallel)
+library(chromVAR)
+library(magrittr)
+library(GenomicRanges)
+library(DESeq2)
+library(ggplot2)
+library(ggbeeswarm)
+library(dplyr)
+library(RColorBrewer)
+library(pheatmap)
+#library(lattice)
 
 # Creating options
 
@@ -42,30 +39,43 @@ parser <- add_option(parser,
                      dest = 'metadata_file',
                      help="Path to the metadata data file (required)."
                     )
+                
+parser <- add_option(parser,
+                    opt_str = c("-o", "--outdir"), 
+                     type = "character",
+                     dest = 'output_dir',
+                     help="Output directory where results are saved."
+                    )
 
 opt = parse_args(parser)
 
 counts = opt$count_data_file
 metadata = opt$metadata_file
+outdir = opt$output_dir
 
 #-------------------------------------------------------------------------------------------------------------------------
 #- Get metadata
 #-------------------------------------------------------------------------------------------------------------------------
-colData <- read.table(metadata, sep="\t",header=T)
-samples<-colData[,1]
-colnames<-colnames(colData)
-colData<-as.data.frame(colData[,-c(1)])
-rownames(colData)<-samples
-colnames(colData)<-colnames[-1]
+colData <- read.table(metadata, sep="\t", header=T)
+#samples <- colData[,1] #makes a vector of all the values in the first column of the table
+#columnnames <-colnames(colData)
+#colData<-as.data.frame(colData[,-c(1)])
+#rownames(colData) <- samples
+#colnames(colData) <- columnnames[-1]
 
 #------------------------------------------------------------------------------------------------------------------------
 #- Create a DESeqDataSet object with DESeqDataSetFromMatrix function
 #------------------------------------------------------------------------------------------------------------------------
 
-countData <- read.table(counts)
+# Create a table for counts
+countData <- read.table(counts, header = T,sep = "\t",check.names = FALSE)
+#geneID <- countData$featureid
+#countData <- select(countData, -featureid)
+#rownames(countData) <- geneID
+
 dds <- DESeqDataSetFromMatrix(countData = countData,
                                 colData = colData,
-                                design = eval(parse(text=paste0("~ ", design))))
+                                design = ~condition, tidy = TRUE)
 
 #------------------------------------------------------------------------------------------------------------------------
 #- Filtering steps
@@ -80,3 +90,7 @@ dds <- dds[ rowSums(counts(dds)) > 5, ]
 #------------------------------------------------------------------------------------------------------------------------
 
 dds <- DESeq(dds)
+res <- results(dds, tidy=TRUE) # Creates a data frame containing the results of DGE
+summary <- summary(res, tidy=TRUE)
+write.table(res,"dds_results.txt", append=FALSE, sep="\t", row.names = TRUE, col.names = TRUE) # Transforms the data frame into a readable text file, which is passed as one of the results of the process deseq2
+write.table(summary,"dds_summary.txt", sep = "\t",row.names = FALSE)
