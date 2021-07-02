@@ -4,25 +4,25 @@
 nextflow.preview.dsl=2
 
 // Log
-log.info ("Starting tests for diffbind...")
+log.info ("Starting tests for deseq2...")
 
 /*------------------------------------------------------------------------------------*/
 /* Define params
 --------------------------------------------------------------------------------------*/
 
-params.metadata = "$baseDir/data/atacseq_design.txt"
+params.metadata = "$baseDir/data/rnaseq_design.txt"
 
 /*------------------------------------------------------------------------------------*/
 /* Module inclusions
 --------------------------------------------------------------------------------------*/
 
-include {diffbind} from '../main.nf'
+include {deseq2} from '../main.nf'
 
 /*------------------------------------------------------------------------------------*/
 /* Define input channels
 --------------------------------------------------------------------------------------*/
 
-testcounts = "$baseDir/data/atacseq_peak_counts.txt"
+testcounts = "../../../../data/rnaseq_gene_counts.txt"
 
 //Define test data input channels
 Channel

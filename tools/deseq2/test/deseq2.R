@@ -20,6 +20,9 @@ library(ggbeeswarm)
 library(dplyr)
 library(RColorBrewer)
 library(pheatmap)
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+
 #library(lattice)
 
 # Creating options
@@ -93,13 +96,32 @@ dds <- DESeq(dds)
 res <- results(dds, tidy=TRUE) # Creates a data frame containing the results of DGE
 write.table(res,"dds_results.txt", append=FALSE, sep="\t", row.names = TRUE, col.names = TRUE) # Transforms the data frame into a readable text file, which is passed as one of the results of the process deseq2
 
-
 summary <- summary(res, 0.01, tidy=TRUE) # Gives a summary of the contrasts effects between control and treatment group. Sets the adjusted p-value cutoff at 0.1
 write.table(summary,"dds_summary.txt", sep = "\t",row.names = FALSE)
 
-resSig <- res[ which(res$padj < 0.01 ), ] #Filters the reads that have an adjusted p-value lower than 0.1 (10%). padj corresponds to the fraction of the genes that would be false positives if one considered all the genes with a higher p-value than this specific gene to be significant
-resSig_sorted <- resSig[ order( resSig$log2FoldChange ), ]
-write.table(resSig_sorted,"dds_significant_genes.txt", append=FALSE, sep="\t", row.names = TRUE, col.names = TRUE)
+resSig <- res[ which(res$padj < 0.01 ), ] #Filters the reads that have an adjusted p-value lower than 0.01 (1%). padj corresponds to the fraction of the genes that would be false positives if one considered all the genes with a higher p-value than this specific gene to be significant
+resSig <- resSig[ order( resSig$log2FoldChange ), ]
+write.table(resSig,"dds_significant_genes.txt", append=FALSE, sep="\t", row.names = TRUE, col.names = TRUE)
+
+#------------------------------------------------------------------------------------------------------------------------
+#- Add column for the Entrez IDs -> KEGG pathway analysis
+#------------------------------------------------------------------------------------------------------------------------
+
+resSig$symbol = mapIds(org.Hs.eg.db,
+                     keys=row.names(res), 
+                     column="SYMBOL",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+resSig$entrez = mapIds(org.Hs.eg.db,
+                     keys=row.names(res), 
+                     column="ENTREZID",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+resSig$name =   mapIds(org.Hs.eg.db,
+                     keys=row.names(res), 
+                     column="GENENAME",
+                     keytype="ENSEMBL",
+                     multiVals="first")
 
 #------------------------------------------------------------------------------------------------------------------------
 #- Plot counts for top 6 differentially expressed genes
@@ -117,14 +139,14 @@ write.table(resSig_sorted,"dds_significant_genes.txt", append=FALSE, sep="\t", r
 #- PCA
 #------------------------------------------------------------------------------------------------------------------------
 
-rlogdata <- rlog(dds, blind=FALSE)
-pcaData <- plotPCA(rlogdata,intgroup=c("condition"),ntop = dim(rlogdata)[1], returnData=TRUE)
-percentVar <- round(100*attr(pcaData, "percentVar"))
-pca <- ggplot(pcaData, aes(PC1, PC2, color=colData[,1])) +
-  geom_point(size=3) +
-  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2], "% variance")) +
-  theme(legend.title = element_blank()) +
-  coord_fixed()
-ggsave(plot = pca, filename = "PCA_plot.pdf", device = "pdf", dpi = 300)
-ggsave(plot = pca, filename = "PCA_plot.svg", device = "svg", dpi = 150)
+#rlogdata <- rlog(dds, blind=FALSE)
+#pcaData <- plotPCA(rlogdata,intgroup=c("condition"),ntop = dim(rlogdata)[1], returnData=TRUE)
+#percentVar <- round(100*attr(pcaData, "percentVar"))
+#pca <- ggplot(pcaData, aes(PC1, PC2, color=colData[,1])) +
+#  geom_point(size=3) +
+ # xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  #ylab(paste0("PC2: ",percentVar[2], "% variance")) +
+  #theme(legend.title = element_blank()) +
+  #coord_fixed()
+#ggsave(plot = pca, filename = "PCA_plot.pdf", device = "pdf", dpi = 300)
+#ggsave(plot = pca, filename = "PCA_plot.svg", device = "svg", dpi = 150)

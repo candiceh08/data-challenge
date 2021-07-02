@@ -12,7 +12,12 @@ dependencies:
     - conda-forge::r-pheatmap=1.0.12
     - bioconda::bioconductor-deseq2=1.28.0
     - bioconda::bioconductor-biocparallel=1.22.0
+    - bioconda::bioconductor-annotationdbi=1.54.0
+    - bioconda::bioconductor-org.hs.eg.db=3.13.0
     - conda-forge::r-stringr=1.4.0
     - conda-forge::r-magrittr=2.0.1
     - bioconda::bioconductor-chromvar=1.10.0
     - bioconda::bioconductor-genomicranges=1.40.0
+    - bioconda::bioconductor-pathview=1.32.0
+    - bioconda::bioconductor-gage=2.42.0
+    - bioconda::bioconductor-gagedata=2.30.0
